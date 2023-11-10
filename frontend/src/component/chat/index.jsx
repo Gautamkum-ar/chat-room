@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/auth-context";
 import { Input } from "../input";
-import axios from "axios";
 
 export const Chat = ({ socket }) => {
 	const {
@@ -11,18 +10,23 @@ export const Chat = ({ socket }) => {
 		chatData,
 		sendMessageApi,
 		setChatData,
+		deleteMessage,
+		editMessage,
+		creatRoom,
 	} = useAuth();
 	const [message, setMessage] = useState("");
 	const [createRoom, setCreateRoom] = useState(false);
 	const [newRoom, setNewRoom] = useState("");
 	const [joinedRoom, setJoinedRoom] = useState({});
 	const [showChat, setShowChat] = useState(false);
+	const [userAction, setUserAction] = useState(false);
+	const [isEdit, setIsEdit] = useState(false);
+	const [editingData, setEditingData] = useState({});
 
 	//filtering chat for seleceted room
 	const displayChat = chatData?.filter(
 		(chat) => chat.chatRoom === joinedRoom._id
 	);
-	console.log(chatData);
 	// sending message to the room
 	const sendMessage = async () => {
 		if (message !== "") {
@@ -46,25 +50,20 @@ export const Chat = ({ socket }) => {
 	const createRoomHandler = async () => {
 		// socket.emit("create_room", newRoom);
 		setCreateRoom(!createRoom);
-		try {
-			const response = await axios.post(
-				"http://localhost:3005/v1/api/chat/add-chatroom",
+		creatRoom(newRoom);
+	};
 
-				{ name: newRoom },
-				{
-					headers: {
-						authorization: `Bearer ${localStorage.getItem("encodedToken")}`,
-					},
-				}
-			);
-			setChatRoom([...chatRoom, response.data.data]);
-		} catch (error) {
-			console.log(error);
-		}
+	// handling edit massage
+	const handleEdit = async () => {
+		const data = await editMessage(message, editingData._id);
+		socket.emit("update_chat", data);
+		setIsEdit(false);
+		setMessage("");
 	};
 
 	//handling room joining
 	const handleJoinRoom = (roomId) => {
+		console.log(roomId);
 		socket.emit("join_room", roomId);
 		setShowChat(true);
 		setJoinedRoom(chatRoom.find((chat) => chat._id === roomId));
@@ -75,6 +74,18 @@ export const Chat = ({ socket }) => {
 			setChatData((chat) => [...chat, data]);
 		});
 	}, [socket]);
+	
+	useEffect(() => {
+		socket.on("recive_updated", (data) => {
+			console.log(data);
+			setChatData(
+				chatData.map((chat) =>
+					chat._id.toString() === data._id.toString() ? { ...data } : chat
+				)
+			);
+		});
+	}, [socket]);
+
 	return (
 		<div className="flex sm:w-full lg:w-[50%] bg-slate-900 shadow-lg  rounded-md h-[70vh]">
 			<div className="flex flex-col w-[30%] border-r-4 items-center">
@@ -128,18 +139,37 @@ export const Chat = ({ socket }) => {
 						{displayChat?.map((chat) => {
 							const { _id, sender, message, time, chatRoom } = chat;
 							return (
-								<p
-									className={`flex ${
+								<div
+									onClick={() => setUserAction(true)}
+									className={`flex flex-col ${
 										sender.toString() === userData._id.toString()
-											? "justify-end  mt-1"
-											: "justify-start mt-1 bg-slate-50"
-									}`}
+											? "items-end  mt-1 mr-4"
+											: "items-start mt-1 "
+									} relative`}
 									key={_id}>
-									{`${message}`}{" "}
-									<span className="text-sm flex justify-center items-center text-[#888]">
+									{message}
+									{sender.toString() === userData._id.toString() && (
+										<p className="flex  bg-white  text-[12px] gap-2 ">
+											<button
+												onClick={() => deleteMessage(_id)}
+												className="text-red-400">
+												Delete
+											</button>
+											<button
+												onClick={() => {
+													setEditingData(chat);
+													setMessage(message);
+													setIsEdit(true);
+												}}
+												className="text-yellow-600">
+												Edit
+											</button>
+										</p>
+									)}
+									<span className="text-[10px] flex justify-center items-center text-[#888]">
 										{time}
 									</span>
-								</p>
+								</div>
 							);
 						})}
 					</div>
@@ -151,15 +181,23 @@ export const Chat = ({ socket }) => {
 							value={message}
 							onKeyDown={(e) => {
 								if (e.key === "Enter") {
-									sendMessage();
+									isEdit ? handleEdit() : sendMessage();
 								}
 							}}
 							onChange={(e) => setMessage(e.target.value)}
 						/>
 						<button
-							onClick={sendMessage}
+							onClick={() => {
+								isEdit ? handleEdit() : sendMessage();
+							}}
 							className="flex  rounded m-2 border h-8 justify-center items-center w-[20%] text-white">
-							Send
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 20 20"
+								fill="white"
+								className="h-6 w-6 ml-2 transform rotate-90">
+								<path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+							</svg>
 						</button>
 					</div>
 				</div>

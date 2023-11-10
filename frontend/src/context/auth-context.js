@@ -1,5 +1,6 @@
 import axios from "axios";
 import { createContext, useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
 export const AuthContextProvider = ({ children }) => {
@@ -8,7 +9,9 @@ export const AuthContextProvider = ({ children }) => {
 	const [chatRoom, setChatRoom] = useState([]);
 	const [chatData, setChatData] = useState([]);
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
+	const navigate = useNavigate();
 
+	// login user in app
 	const login = async (loginData) => {
 		try {
 			const response = await axios.post(
@@ -23,6 +26,14 @@ export const AuthContextProvider = ({ children }) => {
 			console.log(error);
 		}
 	};
+
+	// logout
+	const logoutHandler = () => {
+		setIsAuthenticated(false);
+		localStorage.removeItem("encodedToken");
+	};
+
+	// registering new user
 	const signup = async (signupData) => {
 		try {
 			const response = await axios.post(
@@ -33,11 +44,14 @@ export const AuthContextProvider = ({ children }) => {
 			);
 			if (response.status === 201) {
 				alert("Successfully signed up!");
+				navigate("/login");
 			}
 		} catch (error) {
 			console.log(error);
 		}
 	};
+
+	// loading profile of user
 
 	const loadUser = async () => {
 		const token = localStorage.getItem("encodedToken");
@@ -63,7 +77,27 @@ export const AuthContextProvider = ({ children }) => {
 			}
 		}
 	};
+	// creating new room
 
+	const creatRoom = async (newRoom) => {
+		try {
+			const response = await axios.post(
+				"http://localhost:3005/v1/api/chat/add-chatroom",
+
+				{ name: newRoom },
+				{
+					headers: {
+						authorization: `Bearer ${localStorage.getItem("encodedToken")}`,
+					},
+				}
+			);
+			setChatRoom([...chatRoom, response.data.data]);
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
+	// sending message to database
 	const sendMessageApi = async (data) => {
 		try {
 			const response = await axios.post(
@@ -81,11 +115,52 @@ export const AuthContextProvider = ({ children }) => {
 			console.log(error);
 		}
 	};
-	const logoutHandler = () => {
-		setIsAuthenticated(false);
-		localStorage.removeItem("encodedToken");
+
+	// deleting message from database
+	const deleteMessage = async (messageId) => {
+		try {
+			const response = await axios.delete(
+				`http://localhost:3005/v1/api/chat/delete-message/${messageId}`,
+
+				{
+					headers: {
+						authorization: `Bearer ${localStorage.getItem("encodedToken")}`,
+					},
+				}
+			);
+			if (response.status === 200) {
+				setChatData(chatData.filter((chat) => chat._id !== messageId));
+			}
+		} catch (error) {
+			console.log(error);
+		}
 	};
 
+	//editing message api
+	const editMessage = async (message, messageId) => {
+		try {
+			const response = await axios.post(
+				`http://localhost:3005/v1/api/chat/update/${messageId}`,
+				{ message },
+				{
+					headers: {
+						authorization: `Bearer ${localStorage.getItem("encodedToken")}`,
+					},
+				}
+			);
+			setChatData(
+				chatData.map((chat) =>
+					chat._id === messageId ? response.data.data : chat
+				)
+			);
+
+			return response.data.data;
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
+	// loading profile on first render
 	useEffect(() => {
 		const token = localStorage.getItem("encodedToken");
 		if (token) {
@@ -107,6 +182,9 @@ export const AuthContextProvider = ({ children }) => {
 				chatData,
 				setChatData,
 				sendMessageApi,
+				deleteMessage,
+				editMessage,
+				creatRoom,
 			}}>
 			{children}
 		</AuthContext.Provider>

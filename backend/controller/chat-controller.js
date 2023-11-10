@@ -49,3 +49,63 @@ export const sendMessage = asyncHandler(async (req, res, next) => {
 		return next(new ErrorResponse(error.message, 500));
 	}
 });
+
+
+export const deleteMessage = asyncHandler(async (req, res, next) => {
+	const { messageId } = req.params;
+	const { id } = req.user;
+
+	try {
+		if (!messageId) {
+			return next(new ErrorResponse("missing fields", 400));
+		}
+
+		await messageModel.findOneAndDelete({ _id: messageId }, { sender: id });
+		return res.status(200).json({
+			message: "Message deleted successfully",
+			success: true,
+		});
+	} catch (error) {
+		return next(new ErrorResponse(error.message, 500));
+	}
+});
+
+export const updateMessage = asyncHandler(async (req, res, next) => {
+	const { messageId } = req.params;
+	const { id } = req.user;
+	const { message } = req.body;
+
+	try {
+		if (!messageId || !message) {
+			return next(new ErrorResponse("Missing field", 400));
+		}
+		let oldMessage = await messageModel.findById(messageId);
+		if (!oldMessage) {
+			return next(new ErrorResponse("No such a Message found", 404));
+		}
+		if (String(oldMessage.sender) !== String(id)) {
+			return next(
+				new ErrorResponse("You are not the owner of this message", 401)
+			);
+		}
+		const updatedMessage = await messageModel.findOneAndUpdate(
+			{ _id: messageId },
+			{
+				$set: {
+					message: message,
+				},
+			},
+			{
+				new: true,
+			}
+		);
+		
+		return res.status(200).json({
+			message: "Message updated Successfully",
+			success: true,
+			data: updatedMessage,
+		});
+	} catch (error) {
+		return next(new ErrorResponse(error.message, 500));
+	}
+});
