@@ -37,14 +37,14 @@ io.on("connection", (socket) => {
 		console.log(`user ${socket.id} join the room ${data}`);
 	});
 	socket.on("send_chat", (data) => {
-		const message = new messageModel({
-			chatRoom: data.room,
-			sender: data.username,
-			message: data.message,
-			time: data.time,
-		});
+		// const message = new messageModel({
+		// 	chatRoom: data.room,
+		// 	sender: data.username,
+		// 	message: data.message,
+		// 	time: data.time,
+		// });
 
-		message.save();
+		// message.save();
 		socket.to(data.room).emit("recive_message", data);
 	});
 

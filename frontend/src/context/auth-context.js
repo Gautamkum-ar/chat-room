@@ -1,18 +1,12 @@
 import axios from "axios";
-import {
-	createContext,
-	useContext,
-	useDebugValue,
-	useEffect,
-	useState,
-} from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 const AuthContext = createContext();
 export const AuthContextProvider = ({ children }) => {
 	const [flag, setFlag] = useState(true);
 	const [userData, setUserData] = useState({});
 	const [chatRoom, setChatRoom] = useState([]);
-	const [messages, setMessages] = useState([]);
+	const [chatData, setChatData] = useState([]);
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
 
 	const login = async (loginData) => {
@@ -61,12 +55,30 @@ export const AuthContextProvider = ({ children }) => {
 				if (response) {
 					setUserData(response?.data?.data?.findUser);
 					setChatRoom(response?.data?.data?.chatroom);
-					setMessages(response?.data?.data?.chats);
+					setChatData(response?.data?.data?.chats);
 					setIsAuthenticated(true);
 				}
 			} catch (error) {
 				console.log(error);
 			}
+		}
+	};
+
+	const sendMessageApi = async (data) => {
+		try {
+			const response = await axios.post(
+				"http://localhost:3005/v1/api/chat/save-message",
+				{ ...data },
+				{
+					headers: {
+						authorization: `Bearer ${localStorage.getItem("encodedToken")}`,
+					},
+				}
+			);
+
+			return response.data.data;
+		} catch (error) {
+			console.log(error);
 		}
 	};
 	const logoutHandler = () => {
@@ -82,7 +94,6 @@ export const AuthContextProvider = ({ children }) => {
 			setIsAuthenticated(false);
 		}
 	}, [isAuthenticated]);
-	console.log(messages);
 	return (
 		<AuthContext.Provider
 			value={{
@@ -93,7 +104,9 @@ export const AuthContextProvider = ({ children }) => {
 				logoutHandler,
 				chatRoom,
 				setChatRoom,
-				messages,
+				chatData,
+				setChatData,
+				sendMessageApi,
 			}}>
 			{children}
 		</AuthContext.Provider>

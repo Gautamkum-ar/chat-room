@@ -9,8 +9,8 @@ export const Home = () => {
 	const { logoutHandler } = useAuth();
 
 	return (
-		<div className="flex flex-col w-full h-screen items-center bg-slate-200 p-4 gap-4">
-			<h1 className="text-2xl">Welcome to chat app</h1>
+		<div className="flex flex-col w-full items-center bg-slate-200 p-4 gap-4">
+			<h1 className="text-2xl font-semibold">Welcome to chat app</h1>
 			<button
 				className="flex justify-center items-center bg-red-700 text-white p-2 absolute right-10 rounded-md hover:bg-transparent hover:text-red-700 hover:border-red-300 border px-6"
 				onClick={logoutHandler}>

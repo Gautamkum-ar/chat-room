@@ -4,9 +4,15 @@ import { Input } from "../input";
 import axios from "axios";
 
 export const Chat = ({ socket }) => {
-	const { userData, chatRoom, setChatRoom, messages } = useAuth();
+	const {
+		userData,
+		chatRoom,
+		setChatRoom,
+		chatData,
+		sendMessageApi,
+		setChatData,
+	} = useAuth();
 	const [message, setMessage] = useState("");
-	const [chatData, setChatData] = useState([]);
 	const [createRoom, setCreateRoom] = useState(false);
 	const [newRoom, setNewRoom] = useState("");
 	const [joinedRoom, setJoinedRoom] = useState({});
@@ -14,21 +20,22 @@ export const Chat = ({ socket }) => {
 
 	//filtering chat for seleceted room
 	const displayChat = chatData?.filter(
-		(chat) => chat.room.toString() === joinedRoom._id.toString()
+		(chat) => chat.chatRoom === joinedRoom._id
 	);
-
+	console.log(chatData);
 	// sending message to the room
 	const sendMessage = async () => {
 		if (message !== "") {
-			const data = {
+			const data = await sendMessageApi({
 				message: message,
-				username: userData._id,
-				room: joinedRoom._id,
+				roomId: joinedRoom._id,
+				sender: userData._id,
 				time:
 					new Date(Date.now()).getHours() +
 					":" +
 					new Date(Date.now()).getMinutes(),
-			};
+			});
+
 			await socket.emit("send_chat", data);
 			setChatData([...chatData, data]);
 			setMessage("");
@@ -69,7 +76,7 @@ export const Chat = ({ socket }) => {
 		});
 	}, [socket]);
 	return (
-		<div className="flex sm:w-full lg:w-[50%] bg-slate-900 shadow-lg  rounded-md h-[70%]">
+		<div className="flex sm:w-full lg:w-[50%] bg-slate-900 shadow-lg  rounded-md h-[70vh]">
 			<div className="flex flex-col w-[30%] border-r-4 items-center">
 				<h1 className="flex justify-center items-center h-8 w-full text-white  mt-2 capitalize">
 					{userData?.username}
@@ -94,7 +101,7 @@ export const Chat = ({ socket }) => {
 						</button>
 					</div>
 				)}
-				<div className="flex w-full h-auto mt-6 flex-col  overflow-y-scroll">
+				<div className="flex w-full h-auto mt-6 flex-col  overflow-y-auto">
 					{chatRoom?.map((elms) => (
 						<p
 							className="flex h-8 justify-between px-2 items-center text-[#fff] shadow-md w-full"
@@ -111,19 +118,19 @@ export const Chat = ({ socket }) => {
 			</div>
 
 			{showChat ? (
-				<div className="flex flex-col w-[70%]">
+				<div className="flex flex-col h-[100%] w-[70%] overflow-hidden">
 					<div className="flex justify-center items-center h-[10%] w-full">
 						<h1 className="text-white font-semibold">
 							Live Chat <b> {joinedRoom.name}</b>
 						</h1>
 					</div>
-					<div className=" flex flex-col h-[80%] rounded-md border-2 mx-2 overflow-y-auto w-auto bg-white">
+					<div className=" flex flex-col  rounded-md border-2 mx-2  h-[80%] w-auto bg-white overflow-y-auto">
 						{displayChat?.map((chat) => {
-							const { _id, username, message, time } = chat;
+							const { _id, sender, message, time, chatRoom } = chat;
 							return (
 								<p
 									className={`flex ${
-										username.toString() === userData._id.toString()
+										sender.toString() === userData._id.toString()
 											? "justify-end  mt-1"
 											: "justify-start mt-1 bg-slate-50"
 									}`}
