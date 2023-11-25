@@ -13,6 +13,8 @@ export const Chat = ({ socket }) => {
 		deleteMessage,
 		editMessage,
 		creatRoom,
+		handleJJoinRoomApi,
+		handleLeaveRoomApi,
 	} = useAuth();
 	const [message, setMessage] = useState("");
 	const [createRoom, setCreateRoom] = useState(false);
@@ -27,6 +29,7 @@ export const Chat = ({ socket }) => {
 	const displayChat = chatData?.filter(
 		(chat) => chat.chatRoom === joinedRoom._id
 	);
+	console.log(chatRoom);
 	// sending message to the room
 	const sendMessage = async () => {
 		if (message !== "") {
@@ -63,21 +66,27 @@ export const Chat = ({ socket }) => {
 
 	//handling room joining
 	const handleJoinRoom = (roomId) => {
-		console.log(roomId);
+		handleJJoinRoomApi(roomId);
 		socket.emit("join_room", roomId);
 		setShowChat(true);
 		setJoinedRoom(chatRoom.find((chat) => chat._id === roomId));
 	};
+	// handle remove from room
 
+	const handleRemoveFromRoom = (roomId) => {
+		handleLeaveRoomApi(roomId);
+		// socket.emit("remove_from_room", roomId);
+		setShowChat(false);
+		setJoinedRoom();
+	};
 	useEffect(() => {
 		socket.on("recive_message", (data) => {
 			setChatData((chat) => [...chat, data]);
 		});
 	}, [socket]);
-	
+
 	useEffect(() => {
 		socket.on("recive_updated", (data) => {
-			console.log(data);
 			setChatData(
 				chatData.map((chat) =>
 					chat._id.toString() === data._id.toString() ? { ...data } : chat
@@ -87,15 +96,15 @@ export const Chat = ({ socket }) => {
 	}, [socket]);
 
 	return (
-		<div className="flex sm:w-full lg:w-[50%] bg-slate-900 shadow-lg  rounded-md h-[70vh]">
-			<div className="flex flex-col w-[30%] border-r-4 items-center">
+		<div className="flex sm:w-full lg:w-[60%] bg-slate-900 shadow-lg  rounded-md h-[70vh]">
+			<div className="flex flex-col w-[40%] border-r-4 items-center">
 				<h1 className="flex justify-center items-center h-8 w-full text-white  mt-2 capitalize">
 					{userData?.username}
 				</h1>
 				<div className="flex w-full mt-4">
 					<button
 						onClick={() => setCreateRoom(!createRoom)}
-						className="w-full border mx-2 rounded text-white hover:bg-green-500">
+						className="w-[90%] border mx-auto rounded text-white hover:bg-green-500  ">
 						New Chat Room
 					</button>
 				</div>
@@ -115,13 +124,29 @@ export const Chat = ({ socket }) => {
 				<div className="flex w-full h-auto mt-6 flex-col  overflow-y-auto">
 					{chatRoom?.map((elms) => (
 						<p
+							onClick={() => {
+								setShowChat(!showChat);
+								setJoinedRoom(chatRoom.find((chat) => chat._id === elms._id));
+							}}
 							className="flex h-8 justify-between px-2 items-center text-[#fff] shadow-md w-full"
 							key={elms._id}>
 							{elms.name}
 							<button
-								className="text-green-500"
-								onClick={() => handleJoinRoom(elms._id)}>
-								Join
+								className={`${
+									elms.users.find((user) => user === userData._id)
+										? "text-red-500"
+										: "text-green-500"
+								} text-sm`}
+								onClick={() => {
+									if (elms.users.find((user) => user === userData._id)) {
+										handleRemoveFromRoom(elms._id);
+									} else {
+										handleJoinRoom(elms._id);
+									}
+								}}>
+								{elms.users.find((user) => user === userData._id)
+									? "Leave"
+									: "Join"}
 							</button>
 						</p>
 					))}

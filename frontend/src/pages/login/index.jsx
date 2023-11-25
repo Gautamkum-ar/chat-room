@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Input } from "../../component";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import { useAuth } from "../../context/auth-context";
 
 export const Login = () => {
@@ -10,7 +9,6 @@ export const Login = () => {
 		email: "",
 		password: "",
 	});
-	console.log(loginData);
 
 	return (
 		<div className="flex justify-center items-center">

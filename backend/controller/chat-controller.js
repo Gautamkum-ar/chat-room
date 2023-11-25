@@ -109,3 +109,60 @@ export const updateMessage = asyncHandler(async (req, res, next) => {
 		return next(new ErrorResponse(error.message, 500));
 	}
 });
+
+
+export const joinRoom = asyncHandler(async (req, res, next) => {
+	const { roomId } = req.params;
+	const { id } = req.user;
+	try {
+		if (!roomId) {
+			return next(new ErrorResponse("Missing field", 400));
+		}
+		const findRoom = await chatroomModel.findOneAndUpdate(
+			{ _id: roomId },
+			{
+				$push: {
+					users: id,
+				},
+			},
+			{
+				new: true,
+			}
+		);
+		res.status(200).json({
+			message: "Room joined Successfully",
+			success: true,
+			data: findRoom,
+		});
+	} catch (error) {
+		return next(new ErrorResponse(error.message, 500));
+	}
+});
+
+export const leaveRoom = asyncHandler(async (req, res, next) => {
+	const { roomId } = req.params;
+	const { id } = req.user;
+	try {
+		if (!roomId) {
+			return next(new ErrorResponse("Missing field", 400));
+		}
+		const findRoom = await chatroomModel.findOneAndUpdate(
+			{ _id: roomId },
+			{
+				$pull: {
+					users: id,
+				},
+			},
+			{
+				new: true,
+			}
+		);
+		res.status(200).json({
+			message: "Room left successfully",
+			success: true,
+			data: findRoom,
+		});
+	} catch (error) {
+		return next(new ErrorResponse(error.message, 500));
+	}
+});

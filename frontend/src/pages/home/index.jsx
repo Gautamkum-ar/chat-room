@@ -1,12 +1,11 @@
 import io from "socket.io-client";
-import { useState } from "react";
-import { Chat } from "../../component";
+import { Chat, Loader } from "../../component";
 import { useAuth } from "../../context/auth-context";
 
 const socket = io.connect("http://localhost:3005/");
 
 export const Home = () => {
-	const { logoutHandler } = useAuth();
+	const { logoutHandler, isLoading } = useAuth();
 
 	return (
 		<div className="flex flex-col w-full items-center bg-slate-200 p-4 gap-4">
@@ -16,7 +15,7 @@ export const Home = () => {
 				onClick={logoutHandler}>
 				Log Out
 			</button>
-			<Chat socket={socket} />
+			{isLoading ? <Loader /> : <Chat socket={socket} />}
 		</div>
 	);
 };

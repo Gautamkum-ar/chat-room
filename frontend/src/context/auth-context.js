@@ -8,22 +8,68 @@ export const AuthContextProvider = ({ children }) => {
 	const [userData, setUserData] = useState({});
 	const [chatRoom, setChatRoom] = useState([]);
 	const [chatData, setChatData] = useState([]);
+	const [isLoading, setisLoading] = useState(false);
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
 	const navigate = useNavigate();
 
 	// login user in app
+	const baseUrl = process.env.REACT_APP_BASE_URL;
 	const login = async (loginData) => {
+		setisLoading(true);
 		try {
-			const response = await axios.post(
-				"http://localhost:3005/v1/api/auth/login",
-				{ ...loginData }
-			);
+			const response = await axios.post(`${baseUrl}/auth/login`, {
+				...loginData,
+			});
 			if (response.status === 200) {
 				setIsAuthenticated(true);
+				setisLoading(false);
 				localStorage.setItem("encodedToken", response.data.data.encodedToken);
 			}
 		} catch (error) {
+			setisLoading(false);
 			console.log(error);
+		}
+	};
+	// handle join room api
+	const handleJJoinRoomApi = async (roomId) => {
+		try {
+			const response = await axios.post(
+				`${baseUrl}/chatroom/join/${roomId}`,
+				{},
+				{
+					headers: {
+						authorization: `Bearer ${localStorage.getItem("encodedToken")}`,
+					},
+				}
+			);
+			setChatRoom(
+				chatRoom.map((room) =>
+					room._id === response.data.data._id ? response.data.data : room
+				)
+			);
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
+	// leave room api
+	const handleLeaveRoomApi = async (roomId) => {
+		try {
+			const response = await axios.delete(
+				`${baseUrl}/chatroom/leave-room/${roomId}`,
+				{
+					headers: {
+						authorization: `Bearer ${localStorage.getItem("encodedToken")}`,
+					},
+				}
+			);
+			setChatRoom(
+				chatRoom.map((room) =>
+					room._id === response.data.data._id ? response.data.data : room
+				)
+			);
+		} catch (err) {
+			console.log(err);
 		}
 	};
 
@@ -35,19 +81,21 @@ export const AuthContextProvider = ({ children }) => {
 
 	// registering new user
 	const signup = async (signupData) => {
+		setisLoading(true);
+
 		try {
-			const response = await axios.post(
-				"http://localhost:3005/v1/api/auth/signup",
-				{
-					...signupData,
-				}
-			);
+			const response = await axios.post(`${baseUrl}/auth/signup`, {
+				...signupData,
+			});
 			if (response.status === 201) {
+				setisLoading(false);
+
 				alert("Successfully signed up!");
 				navigate("/login");
 			}
 		} catch (error) {
 			console.log(error);
+			setisLoading(false);
 		}
 	};
 
@@ -58,15 +106,16 @@ export const AuthContextProvider = ({ children }) => {
 		if (flag) {
 			setFlag(false);
 			try {
-				const response = await axios.get(
-					"http://localhost:3005/v1/api/auth/get-user",
-					{
-						headers: {
-							authorization: `Bearer ${token}`,
-						},
-					}
-				);
+				setisLoading(true);
+
+				const response = await axios.get(`${baseUrl}/auth/get-user`, {
+					headers: {
+						authorization: `Bearer ${token}`,
+					},
+				});
 				if (response) {
+					setisLoading(false);
+
 					setUserData(response?.data?.data?.findUser);
 					setChatRoom(response?.data?.data?.chatroom);
 					setChatData(response?.data?.data?.chats);
@@ -74,6 +123,9 @@ export const AuthContextProvider = ({ children }) => {
 				}
 			} catch (error) {
 				console.log(error);
+				setisLoading(false);
+			} finally {
+				setisLoading(false);
 			}
 		}
 	};
@@ -82,7 +134,7 @@ export const AuthContextProvider = ({ children }) => {
 	const creatRoom = async (newRoom) => {
 		try {
 			const response = await axios.post(
-				"http://localhost:3005/v1/api/chat/add-chatroom",
+				`${baseUrl}/chat/add-chatroom`,
 
 				{ name: newRoom },
 				{
@@ -101,7 +153,7 @@ export const AuthContextProvider = ({ children }) => {
 	const sendMessageApi = async (data) => {
 		try {
 			const response = await axios.post(
-				"http://localhost:3005/v1/api/chat/save-message",
+				`${baseUrl}/chat/save-message`,
 				{ ...data },
 				{
 					headers: {
@@ -120,7 +172,7 @@ export const AuthContextProvider = ({ children }) => {
 	const deleteMessage = async (messageId) => {
 		try {
 			const response = await axios.delete(
-				`http://localhost:3005/v1/api/chat/delete-message/${messageId}`,
+				`${baseUrl}/chat/delete-message/${messageId}`,
 
 				{
 					headers: {
@@ -140,7 +192,7 @@ export const AuthContextProvider = ({ children }) => {
 	const editMessage = async (message, messageId) => {
 		try {
 			const response = await axios.post(
-				`http://localhost:3005/v1/api/chat/update/${messageId}`,
+				`${baseUrl}/chat/update/${messageId}`,
 				{ message },
 				{
 					headers: {
@@ -185,6 +237,9 @@ export const AuthContextProvider = ({ children }) => {
 				deleteMessage,
 				editMessage,
 				creatRoom,
+				isLoading,
+				handleJJoinRoomApi,
+				handleLeaveRoomApi,
 			}}>
 			{children}
 		</AuthContext.Provider>

@@ -3,8 +3,10 @@ import { checkAuth } from "../middleware/checkAuth.js";
 import {
 	createChatRoom,
 	deleteMessage,
+	joinRoom,
+	leaveRoom,
 	sendMessage,
-    updateMessage,
+	updateMessage,
 } from "../controller/chat-controller.js";
 
 const chatRoomRouter = express.Router();
@@ -16,6 +18,8 @@ chatRoomRouter.delete(
 	checkAuth,
 	deleteMessage
 );
-chatRoomRouter.post('/chat/update/:messageId',checkAuth,updateMessage)
+chatRoomRouter.post("/chat/update/:messageId", checkAuth, updateMessage);
+chatRoomRouter.post("/chatroom/join/:roomId", checkAuth, joinRoom);
+chatRoomRouter.delete("/chatroom/leave-room/:roomId", checkAuth, leaveRoom);
 
 export default chatRoomRouter;

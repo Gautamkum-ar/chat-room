@@ -4,9 +4,7 @@ import http from "http";
 import { Server } from "socket.io";
 import "./database/initial-db.js";
 import AuthRouter from "./routes/auth-route.js";
-import messageModel from "./model/chat-model.js";
 import chatRoomRouter from "./routes/chatroom-route.js";
-import { time } from "console";
 // import dotenv from "dotenv";
 
 const app = express();
@@ -20,6 +18,22 @@ app.use(express.json());
 //registering route
 app.use("/v1/api", AuthRouter);
 app.use("/v1/api", chatRoomRouter);
+
+app.use("*", (req, res) => {
+	res.status(404).json({
+		success: false,
+		message: "Route not found",
+		method: `${req.method} ${req.url} is not allowed`,
+	});
+});
+
+app.use((err, req, res, next) => {
+	return res.status(err.statusCode || 500).json({
+		statusCode: err.statusCode || 500,
+		success: false,
+		message: err.message,
+	});
+});
 
 const server = http.createServer(app);
 const io = new Server(server, {
