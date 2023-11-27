@@ -10,11 +10,51 @@ export const AuthContextProvider = ({ children }) => {
 	const [chatData, setChatData] = useState([]);
 	const [isLoading, setisLoading] = useState(false);
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
+	const [showToaster, setShowToaster] = useState({
+		status: false,
+		message: "",
+		color: "",
+	});
 	const navigate = useNavigate();
+
+	//toaster
+	const toast = {
+		error: (message) => {
+			setShowToaster({
+				...showToaster,
+				message: message,
+				status: true,
+				color: "red",
+			});
+			setTimeout(() => {
+				setShowToaster({
+					...showToaster,
+					status: false,
+				});
+			}, 3000);
+		},
+		success: (message) => {
+			setShowToaster({
+				...showToaster,
+				message: message,
+				status: true,
+				color: "green",
+			});
+			setTimeout(() => {
+				setShowToaster({
+					...showToaster,
+					status: false,
+				});
+			}, 3000);
+		},
+	};
 
 	// login user in app
 	const baseUrl = process.env.REACT_APP_BASE_URL;
 	const login = async (loginData) => {
+		if (loginData.email === "" || loginData.password === "") {
+			return toast.error("Please enter all fields");
+		}
 		setisLoading(true);
 		try {
 			const response = await axios.post(`${baseUrl}/auth/login`, {
@@ -23,11 +63,12 @@ export const AuthContextProvider = ({ children }) => {
 			if (response.status === 200) {
 				setIsAuthenticated(true);
 				setisLoading(false);
+				toast.success(response.data.message);
 				localStorage.setItem("encodedToken", response.data.data.encodedToken);
 			}
 		} catch (error) {
+			toast.error(error.response.data.message);
 			setisLoading(false);
-			console.log(error);
 		}
 	};
 	// handle join room api
@@ -42,12 +83,15 @@ export const AuthContextProvider = ({ children }) => {
 					},
 				}
 			);
+			toast.success(response.data.message);
 			setChatRoom(
 				chatRoom.map((room) =>
 					room._id === response.data.data._id ? response.data.data : room
 				)
 			);
 		} catch (error) {
+			toast.error(error.response.data.message);
+
 			console.log(error);
 		}
 	};
@@ -63,6 +107,7 @@ export const AuthContextProvider = ({ children }) => {
 					},
 				}
 			);
+			toast.success(response.data.message);
 			setChatRoom(
 				chatRoom.map((room) =>
 					room._id === response.data.data._id ? response.data.data : room
@@ -70,6 +115,7 @@ export const AuthContextProvider = ({ children }) => {
 			);
 		} catch (err) {
 			console.log(err);
+			toast.error(err.response.data.message);
 		}
 	};
 
@@ -89,12 +135,12 @@ export const AuthContextProvider = ({ children }) => {
 			});
 			if (response.status === 201) {
 				setisLoading(false);
-
+				toast.success(response.data.message);
 				alert("Successfully signed up!");
 				navigate("/login");
 			}
 		} catch (error) {
-			console.log(error);
+			toast.error(error.response.data.message);
 			setisLoading(false);
 		}
 	};
@@ -122,7 +168,7 @@ export const AuthContextProvider = ({ children }) => {
 					setIsAuthenticated(true);
 				}
 			} catch (error) {
-				console.log(error);
+				toast.error(error.response.data.message);
 				setisLoading(false);
 			} finally {
 				setisLoading(false);
@@ -143,9 +189,10 @@ export const AuthContextProvider = ({ children }) => {
 					},
 				}
 			);
+			toast.success(response.data.message);
 			setChatRoom([...chatRoom, response.data.data]);
 		} catch (error) {
-			console.log(error);
+			toast.error(error.response.data.message);
 		}
 	};
 
@@ -164,7 +211,7 @@ export const AuthContextProvider = ({ children }) => {
 
 			return response.data.data;
 		} catch (error) {
-			console.log(error);
+			toast.error(error.response.data.message);
 		}
 	};
 
@@ -181,10 +228,11 @@ export const AuthContextProvider = ({ children }) => {
 				}
 			);
 			if (response.status === 200) {
+				toast.success(response.data.message);
 				setChatData(chatData.filter((chat) => chat._id !== messageId));
 			}
 		} catch (error) {
-			console.log(error);
+			toast.error(error.response.data.message);
 		}
 	};
 
@@ -209,6 +257,7 @@ export const AuthContextProvider = ({ children }) => {
 			return response.data.data;
 		} catch (error) {
 			console.log(error);
+			toast.error(error.response.data.message);
 		}
 	};
 
@@ -240,6 +289,8 @@ export const AuthContextProvider = ({ children }) => {
 				isLoading,
 				handleJJoinRoomApi,
 				handleLeaveRoomApi,
+				showToaster,
+				setShowToaster,
 			}}>
 			{children}
 		</AuthContext.Provider>

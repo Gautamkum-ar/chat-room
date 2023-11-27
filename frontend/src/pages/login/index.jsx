@@ -15,7 +15,7 @@ export const Login = () => {
 			<form
 				className="flex flex-col justify-center items-center gap-3 p-4 shadow-2xl rounded-md mt-8 w-80"
 				onSubmit={(e) => e.preventDefault()}>
-				<h1>Login</h1>
+				<h1 className="flex font-bold text-blue-600">Login</h1>
 
 				<Input
 					className="p-1 rounded-sm px-2"
@@ -28,7 +28,7 @@ export const Login = () => {
 				<Input
 					className="p-1 rounded-sm px-2"
 					type={"password"}
-					placeholder="password"
+					placeholder="Password"
 					onChange={(e) =>
 						setLoginData({ ...loginData, password: e.target.value })
 					}
@@ -38,8 +38,11 @@ export const Login = () => {
 					onClick={() => login(loginData)}>
 					Join
 				</button>
-				<p>
-					Not have account?? <Link to={"/signup"}>Signup</Link>
+				<p className="flex text-sm gap-2">
+					Not have account?{" "}
+					<Link className="flex text-blue-500 " to={"/signup"}>
+						Signup
+					</Link>
 				</p>
 			</form>
 		</div>

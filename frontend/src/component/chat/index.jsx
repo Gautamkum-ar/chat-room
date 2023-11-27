@@ -29,7 +29,6 @@ export const Chat = ({ socket }) => {
 	const displayChat = chatData?.filter(
 		(chat) => chat.chatRoom === joinedRoom._id
 	);
-	console.log(chatRoom);
 	// sending message to the room
 	const sendMessage = async () => {
 		if (message !== "") {
@@ -77,7 +76,6 @@ export const Chat = ({ socket }) => {
 		handleLeaveRoomApi(roomId);
 		// socket.emit("remove_from_room", roomId);
 		setShowChat(false);
-		setJoinedRoom();
 	};
 	useEffect(() => {
 		socket.on("recive_message", (data) => {
@@ -123,20 +121,23 @@ export const Chat = ({ socket }) => {
 				)}
 				<div className="flex w-full h-auto mt-6 flex-col  overflow-y-auto">
 					{chatRoom?.map((elms) => (
-						<p
-							onClick={() => {
-								setShowChat(!showChat);
-								setJoinedRoom(chatRoom.find((chat) => chat._id === elms._id));
-							}}
+						<div
 							className="flex h-8 justify-between px-2 items-center text-[#fff] shadow-md w-full"
 							key={elms._id}>
-							{elms.name}
+							<p
+								onClick={() => {
+									setShowChat(true);
+									setJoinedRoom(chatRoom.find((chat) => chat._id === elms._id));
+								}}
+								className="flex h-8 justify-between px-2 items-center text-[#fff] shadow-md w-full">
+								{elms.name}
+							</p>
 							<button
 								className={`${
 									elms.users.find((user) => user === userData._id)
 										? "text-red-500"
 										: "text-green-500"
-								} text-sm`}
+								} text-sm z-10`}
 								onClick={() => {
 									if (elms.users.find((user) => user === userData._id)) {
 										handleRemoveFromRoom(elms._id);
@@ -148,7 +149,7 @@ export const Chat = ({ socket }) => {
 									? "Leave"
 									: "Join"}
 							</button>
-						</p>
+						</div>
 					))}
 				</div>
 			</div>
@@ -162,7 +163,7 @@ export const Chat = ({ socket }) => {
 					</div>
 					<div className=" flex flex-col  rounded-md border-2 mx-2  h-[80%] w-auto bg-white overflow-y-auto">
 						{displayChat?.map((chat) => {
-							const { _id, sender, message, time, chatRoom } = chat;
+							const { _id, sender, message, time } = chat;
 							return (
 								<div
 									onClick={() => setUserAction(true)}
