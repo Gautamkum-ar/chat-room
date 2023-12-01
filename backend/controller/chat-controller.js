@@ -7,7 +7,6 @@ import messageModel from "../model/chat-model.js";
 export const createChatRoom = asyncHandler(async (req, res, next) => {
 	const { name } = req.body;
 	const { id } = req.user;
-	console.log(name);
 	try {
 		if (!name) {
 			return next(new ErrorResponse("Missing Fields", 400));
@@ -27,6 +26,22 @@ export const createChatRoom = asyncHandler(async (req, res, next) => {
 	}
 });
 
+// @desc    Get all chat rooms
+// @route   GET /api/v1/rooms
+// @access  Public
+export const getAllChats = asyncHandler(async (req, res, next) => {
+	try {
+		const foundAllRooms = await chatroomModel.find().populate("users");
+		return res.status(200).json({
+			message: "Room Loaded successfully",
+			success: true,
+			data: foundAllRooms,
+		});
+	} catch (error) {
+		return next(new ErrorResponse(error.message, 500));
+	}
+});
+
 export const sendMessage = asyncHandler(async (req, res, next) => {
 	const { message, sender, roomId, time } = req.body;
 	try {
@@ -40,16 +55,18 @@ export const sendMessage = asyncHandler(async (req, res, next) => {
 			time: time,
 		});
 		await newMessage.save();
+		const responseData = await messageModel
+			.findById({ _id: newMessage._id })
+			.populate("sender");
 		return res.status(200).json({
 			message: "Message save successfully",
 			success: true,
-			data: newMessage,
+			data: responseData,
 		});
 	} catch (error) {
 		return next(new ErrorResponse(error.message, 500));
 	}
 });
-
 
 export const deleteMessage = asyncHandler(async (req, res, next) => {
 	const { messageId } = req.params;
@@ -88,18 +105,20 @@ export const updateMessage = asyncHandler(async (req, res, next) => {
 				new ErrorResponse("You are not the owner of this message", 401)
 			);
 		}
-		const updatedMessage = await messageModel.findOneAndUpdate(
-			{ _id: messageId },
-			{
-				$set: {
-					message: message,
+		const updatedMessage = await messageModel
+			.findOneAndUpdate(
+				{ _id: messageId },
+				{
+					$set: {
+						message: message,
+					},
 				},
-			},
-			{
-				new: true,
-			}
-		);
-		
+				{
+					new: true,
+				}
+			)
+			.populate("sender");
+
 		return res.status(200).json({
 			message: "Message updated Successfully",
 			success: true,
@@ -110,7 +129,6 @@ export const updateMessage = asyncHandler(async (req, res, next) => {
 	}
 });
 
-
 export const joinRoom = asyncHandler(async (req, res, next) => {
 	const { roomId } = req.params;
 	const { id } = req.user;
@@ -118,17 +136,19 @@ export const joinRoom = asyncHandler(async (req, res, next) => {
 		if (!roomId) {
 			return next(new ErrorResponse("Missing field", 400));
 		}
-		const findRoom = await chatroomModel.findOneAndUpdate(
-			{ _id: roomId },
-			{
-				$push: {
-					users: id,
+		const findRoom = await chatroomModel
+			.findOneAndUpdate(
+				{ _id: roomId },
+				{
+					$push: {
+						users: id,
+					},
 				},
-			},
-			{
-				new: true,
-			}
-		);
+				{
+					new: true,
+				}
+			)
+			.populate("users");
 		res.status(200).json({
 			message: "Room joined Successfully",
 			success: true,

@@ -51,6 +51,7 @@ export const AuthContextProvider = ({ children }) => {
 
 	// login user in app
 	const baseUrl = process.env.REACT_APP_BASE_URL;
+
 	const login = async (loginData) => {
 		if (loginData.email === "" || loginData.password === "") {
 			return toast.error("Please enter all fields");
@@ -91,8 +92,6 @@ export const AuthContextProvider = ({ children }) => {
 			);
 		} catch (error) {
 			toast.error(error.response.data.message);
-
-			console.log(error);
 		}
 	};
 
@@ -163,7 +162,7 @@ export const AuthContextProvider = ({ children }) => {
 					setisLoading(false);
 
 					setUserData(response?.data?.data?.findUser);
-					setChatRoom(response?.data?.data?.chatroom);
+
 					setChatData(response?.data?.data?.chats);
 					setIsAuthenticated(true);
 				}
@@ -196,6 +195,15 @@ export const AuthContextProvider = ({ children }) => {
 		}
 	};
 
+	// get All the room
+	const getAllRoom = async () => {
+		try {
+			const response = await axios.get(`${baseUrl}/chatroom/rooms`);
+			setChatRoom(response?.data?.data);
+		} catch (error) {
+			toast.error(error.response.data.message);
+		}
+	};
 	// sending message to database
 	const sendMessageApi = async (data) => {
 		try {
@@ -208,7 +216,6 @@ export const AuthContextProvider = ({ children }) => {
 					},
 				}
 			);
-
 			return response.data.data;
 		} catch (error) {
 			toast.error(error.response.data.message);
@@ -270,6 +277,9 @@ export const AuthContextProvider = ({ children }) => {
 			setIsAuthenticated(false);
 		}
 	}, [isAuthenticated]);
+	useEffect(() => {
+		getAllRoom();
+	}, []);
 	return (
 		<AuthContext.Provider
 			value={{

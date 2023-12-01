@@ -58,12 +58,11 @@ export const getProfile = asyncHandler(async (req, res, next) => {
 	const { id } = req.user;
 	try {
 		const findUser = await userModel.findById({ _id: id });
-		const chatroom = await chatroomModel.find().select("-__v");
-		const chats = await chatModel.find();
+		const chats = await chatModel.find().populate("sender");
 		res.status(200).json({
 			message: "Successfuly Get Profile",
 			success: true,
-			data: { findUser, chatroom, chats },
+			data: { findUser, chats },
 		});
 	} catch (error) {
 		next(new ErrorResponse(error.message, 500));

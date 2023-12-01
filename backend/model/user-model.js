@@ -14,18 +14,18 @@ const userModel = new mongoose.Schema(
 			type: String,
 			required: true,
 		},
-		messages: [
-			{
-				type: mongoose.Schema.Types.ObjectId,
-				ref: "Message",
-			},
-		],
-		chatroom: [
-			{
-				type: mongoose.Schema.Types.ObjectId,
-				ref: "chatroom",
-			},
-		],
+		// messages: [
+		// 	{
+		// 		type: mongoose.Schema.Types.ObjectId,
+		// 		ref: "Message",
+		// 	},
+		// ],
+		// chatroom: [
+		// 	{
+		// 		type: mongoose.Schema.Types.ObjectId,
+		// 		ref: "chatroom",
+		// 	},
+		// ],
 	},
 	{
 		timestamps: true,

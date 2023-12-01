@@ -3,6 +3,7 @@ import { checkAuth } from "../middleware/checkAuth.js";
 import {
 	createChatRoom,
 	deleteMessage,
+	getAllChats,
 	joinRoom,
 	leaveRoom,
 	sendMessage,
@@ -12,6 +13,7 @@ import {
 const chatRoomRouter = express.Router();
 
 chatRoomRouter.post("/chat/add-chatroom", checkAuth, createChatRoom);
+chatRoomRouter.get("/chatroom/rooms", getAllChats);
 chatRoomRouter.post("/chat/save-message", checkAuth, sendMessage);
 chatRoomRouter.delete(
 	"/chat/delete-message/:messageId",
